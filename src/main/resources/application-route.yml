@@ -1,0 +1,84 @@
+#spring:
+#  cloud:
+#    gateway:
+#      routes:
+#        - id: user-service
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/user-service/login # test login2
+#            - Method=POST
+#          filters:
+#            - RemoveRequestHeader=Cookie
+#            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
+#        - id: user-service
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/user-service/users
+#            - Method=POST
+#          filters:
+#            - RemoveRequestHeader=Cookie
+#            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
+#        - id: user-service
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/user-service/actuator/**
+#            - Method=GET,POST
+#          filters:
+#            - RemoveRequestHeader=Cookie
+#            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
+#        - id: user-service
+#          uri: lb://USER-SERVICE
+#          predicates:
+#            - Path=/user-service/** # welcome, health-check
+#            - Method=GET
+#          filters:
+#            - RemoveRequestHeader=Cookie
+#            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
+#            - name: AuthorizationHeaderFilter # jwt filter
+
+#        - id: catalog-service
+#          uri: lb://CATALOG-SERVICE # round robbin
+#          predicates:
+#            - Path=/catalog-service/**
+#          filters:
+#            - RewritePath=/catalog-service/(?<segment>.*), /$\{segment}
+#
+#        - id: order-service
+#          uri: lb://ORDER-SERVICE # round robbin
+#          predicates:
+#            - Path=/order-service/**
+#          filters:
+#            - RewritePath=/order-service/(?<segment>.*), /$\{segment}
+#        - id: order-service
+#          uri: lb://ORDER-SERVICE
+#          predicates:
+#            - Path=/order-service/actuator/**
+#            - Method=GET,POST
+#          filters:
+#            - RemoveRequestHeader=Cookie
+#            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
+
+#        - id: first-service
+#          uri: lb://FIRST-SERVICE # round robbin
+#          predicates:
+#            - Path=/first-service/**
+#          filters:
+#            - name: CustomFilter
+#        - id: second-service
+#          uri: lb://SECOND-SERVICE
+#          predicates:
+#            - Path=/second-service/**
+#          filters:
+#            - name: CustomFilter
+#            - name: LoggingFilter
+#              args:
+#                baseMessage: Hi, there. Logging Filter
+#                preLogger: true
+#                postLogger: true
+#spring:
+#  cloud:
+#    gateway:
+#      discovery:
+#        locator:
+#          enabled: true
+#          lower-case-service-id: true

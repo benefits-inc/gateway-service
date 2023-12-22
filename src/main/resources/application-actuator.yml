@@ -1,0 +1,12 @@
+# actuator
+# management 작성 안해도 바로 /actuator로 사용가능 ex) /actuator/health
+# 기본적 으로 self, health, health-check만 가져옴
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, health, beans, httpexchanges, busrefresh
+
+# include: "*" # 전부 가져오기
+# refresh의 의미는 Config Server에 저장된 내용에 변경이 일어나면 user-service 재 시작 없이 바뀌는 대로 가져 오겠다
+# httpexchanges -> 가장 최근 100건의 stack trace 생성 -> HttpExchangeRepository 빈이 필요함

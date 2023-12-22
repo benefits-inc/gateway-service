@@ -1,1 +1,9 @@
+server:
+  port: 8000
 
+spring:
+  application:
+    name: gateway-service
+
+  profiles:
+    include: eureka, config, actuator, rabbitmq #, route
