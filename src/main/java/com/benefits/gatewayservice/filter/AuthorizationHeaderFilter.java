@@ -1,3 +1,4 @@
+/*
 package com.benefits.gatewayservice.filter;
 
 import com.benefits.gatewayservice.token.resultcode.TokenResultCode;
@@ -17,6 +18,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Objects;
 @Slf4j
 @Component
@@ -45,8 +47,11 @@ public class AuthorizationHeaderFilter implements GatewayFilter {
 
         var jwt = authorizationHeader.replace("Bearer", "");
 
+        //request.getMethod()
+        //request.getURI()
+
         // token validation return
-        var jwtValid = tokenHelperIfs.validationToken(jwt);
+        var jwtValid = tokenHelperIfs.validationToken(jwt, List.of(""));
 
         if(!jwtValid.equals(TokenResultCode.OK)){
             return onError(exchange, jwtValid.getResultCode() + " - " + jwtValid.getMessage(), HttpStatus.UNAUTHORIZED);
@@ -68,10 +73,13 @@ public class AuthorizationHeaderFilter implements GatewayFilter {
         DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
 
         return response.writeWith(Flux.just(buffer));
-        /*
+        */
+/*
 
-         */
+         *//*
+
 //        return response.setComplete();
     }
 
 }
+*/
