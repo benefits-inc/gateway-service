@@ -1,17 +1,21 @@
 package com.benefits.gatewayservice.token.helper;
 
+import com.benefits.gatewayservice.token.payload.Payload;
 import com.benefits.gatewayservice.token.resultcode.ResultCodeIfs;
 import com.benefits.gatewayservice.token.resultcode.TokenResultCode;
 import com.benefits.gatewayservice.token.ifs.TokenHelperIfs;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Component
@@ -24,8 +28,32 @@ public class JwtTokenHelper implements TokenHelperIfs {
 
 
     @Override
-    public ResultCodeIfs validationToken(String token) {
-        var secretKey = Objects.requireNonNull(env.getProperty("token.secret.key"));
+    public ResultCodeIfs validationToken(String token, List<String> roles) {
+        var token_payload = token.split("\\.")[1];
+        byte[] decodedPayloadByte = Base64.getDecoder().decode(token_payload);
+
+        Payload payload = null;
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            payload = objectMapper.readValue(decodedPayloadByte, Payload.class);
+        } catch (IOException e) {
+            return TokenResultCode.INVALID_PAYLOAD;
+        }
+
+        if( ! roles.contains(payload.getRole()) ){
+            return TokenResultCode.INVALID_PAYLOAD;
+        }
+
+        var secretKey = "";
+        switch (payload.getRole()) {
+            case "USER" -> secretKey = Objects.requireNonNull(env.getProperty("token.secret.user.key"));
+            case "SELLER" -> secretKey = Objects.requireNonNull(env.getProperty("token.secret.seller.key"));
+            case "SUPERVISOR" -> secretKey = Objects.requireNonNull(env.getProperty("token.secret.supervisor.key"));
+            default -> {
+                return TokenResultCode.INVALID_TOKEN;
+            }
+        }
+        //var secretKey = Objects.requireNonNull(env.getProperty("token.secret.user.key"));
 
         var key = Keys.hmacShaKeyFor(secretKey.getBytes());
 

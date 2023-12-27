@@ -14,6 +14,7 @@ public enum TokenResultCode implements ResultCodeIfs{
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED.value(), 4002, "만료된 토큰"),
     TOKEN_EXCEPTION(HttpStatus.UNAUTHORIZED.value(), 4003, "유효 하지 않은 토큰 - 예외"),
     SUBJECT_EMPTY(HttpStatus.UNAUTHORIZED.value(), 4004, "SUBJECT is empty"),
+    INVALID_PAYLOAD(HttpStatus.UNAUTHORIZED.value(), 4005, "페이로드 검증 에러"),
 
     ;
 
