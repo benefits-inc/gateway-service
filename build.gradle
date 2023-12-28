@@ -47,6 +47,8 @@ dependencies {
 
 	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
+	implementation 'io.netty:netty-resolver-dns-native-macos'
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.amqp:spring-rabbit-test'
 }
