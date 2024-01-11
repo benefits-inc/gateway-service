@@ -1,7 +1,9 @@
 package com.benefits.gatewayservice.config;
 
+import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -14,14 +16,17 @@ import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
 @Configuration
-public class WebFilterCorsConfig {
+public class WebFilterCorsConfig implements EnvironmentAware {
+
+    private Environment env;
 
     private static final String ALLOWED_HEADERS = "x-requested-with, authorization, access_token, Content-Type";
     private static final String ALLOWED_METHODS = "GET, PUT, POST, DELETE, OPTIONS"; // PATCH 는 현재 사용안하고 있으니 제외
 
     // 브라우저의 cors 정책 gateway 에서 front origin(http://localhost:3001) 허용
     // 각 서비스에서는 게이트웨이 origin(http://localhost:8000, http://localhost:3001) 만 허용
-    private static final String ALLOWED_ORIGIN = "http://localhost:3001";
+    // private static final String ALLOWED_ORIGIN = "http://localhost:3001";
+
     private static final String MAX_AGE = "3600";
 
     // true 로 설정할 경우 allowed_origin 에 '*' 을 입력할 수 없고,
@@ -31,6 +36,7 @@ public class WebFilterCorsConfig {
 
     @Bean
     public WebFilter corsFilter() {
+        String ALLOWED_ORIGIN = env.getProperty("front.domain");
 
         return (ServerWebExchange ctx, WebFilterChain chain) -> {
 
@@ -57,5 +63,9 @@ public class WebFilterCorsConfig {
             }
             return chain.filter(ctx);
         };
+    }
+    @Override
+    public void setEnvironment(final Environment env) {
+        this.env = env;
     }
 }
