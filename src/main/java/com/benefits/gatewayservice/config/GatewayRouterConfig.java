@@ -1,14 +1,19 @@
 package com.benefits.gatewayservice.config;
 
+import com.benefits.gatewayservice.common.spec.Api;
 import com.benefits.gatewayservice.filter.AuthSellerHeaderFilter;
 import com.benefits.gatewayservice.filter.AuthSuperHeaderFilter;
 import com.benefits.gatewayservice.filter.AuthUserHeaderFilter;
 //import com.benefits.gatewayservice.filter.AuthorizationHeaderFilter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
+import reactor.core.publisher.Mono;
 
 @Configuration
 @RequiredArgsConstructor
@@ -18,6 +23,7 @@ public class GatewayRouterConfig {
     private final AuthSellerHeaderFilter authSellerHeaderFilter; // seller, super
     private final AuthUserHeaderFilter authUserHeaderFilter; // user, super
     private final AuthSuperHeaderFilter authSuperHeaderFilter; // super
+    private final ObjectMapper objectMapper;
 
 
     @Bean
@@ -72,6 +78,15 @@ public class GatewayRouterConfig {
                                         //.removeRequestHeader("Cookie")
                                         .rewritePath("/user-service/(?<segment>.*)","/${segment}")
                                         .filter(authUserHeaderFilter)
+                                        .modifyResponseBody(String.class, Api.class, MediaType.APPLICATION_JSON_VALUE,
+                                                (exchange, string) -> {
+                                                    try {
+                                                        var response = objectMapper.readValue(string, Api.class);
+                                                        return Mono.just(response);
+                                                    } catch (JsonProcessingException e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                })
                                 ).
                                 uri("lb://user-service")
                 )
@@ -81,6 +96,15 @@ public class GatewayRouterConfig {
                                         //.removeRequestHeader("Cookie")
                                         .rewritePath("/user-service/(?<segment>.*)","/${segment}")
                                         .filter(authSuperHeaderFilter) // 관리자용 필터로 변경
+                                        .modifyResponseBody(String.class, Api.class, MediaType.APPLICATION_JSON_VALUE,
+                                                (exchange, string) -> {
+                                                    try {
+                                                        var response = objectMapper.readValue(string, Api.class);
+                                                        return Mono.just(response);
+                                                    } catch (JsonProcessingException e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                })
                                 ).
                                 uri("lb://user-service")
                 )
@@ -102,6 +126,15 @@ public class GatewayRouterConfig {
                                         //.removeRequestHeader("Cookie")
                                         .rewritePath("/order-service/(?<segment>.*)","/${segment}")
                                         .filter(authUserHeaderFilter)
+                                        .modifyResponseBody(String.class, Api.class, MediaType.APPLICATION_JSON_VALUE,
+                                                (exchange, string) -> {
+                                                    try {
+                                                        var response = objectMapper.readValue(string, Api.class);
+                                                        return Mono.just(response);
+                                                    } catch (JsonProcessingException e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                })
                                 ).
                                 uri("lb://order-service")
                 )
@@ -110,6 +143,15 @@ public class GatewayRouterConfig {
                                 filters( f -> f
                                         .rewritePath("/order-service/(?<segment>.*)","/${segment}")
                                         .filter(authSuperHeaderFilter)
+                                        .modifyResponseBody(String.class, Api.class, MediaType.APPLICATION_JSON_VALUE,
+                                                (exchange, string) -> {
+                                                    try {
+                                                        var response = objectMapper.readValue(string, Api.class);
+                                                        return Mono.just(response);
+                                                    } catch (JsonProcessingException e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                })
                                 ).
                                 uri("lb://order-service")
                 )
@@ -139,6 +181,15 @@ public class GatewayRouterConfig {
                                 filters( f -> f
                                         .rewritePath("/product-service/(?<segment>.*)","/${segment}")
                                         .filter(authSellerHeaderFilter) // seller, supervisor
+                                        .modifyResponseBody(String.class, Api.class, MediaType.APPLICATION_JSON_VALUE,
+                                                (exchange, string) -> {
+                                                    try {
+                                                        var response = objectMapper.readValue(string, Api.class);
+                                                        return Mono.just(response);
+                                                    } catch (JsonProcessingException e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                })
                                 ).
                                 uri("lb://product-service")
                 )
@@ -167,6 +218,15 @@ public class GatewayRouterConfig {
                                 .filters( f -> f
                                         .rewritePath("/review-service/(?<segment>.*)","/${segment}")
                                         .filter(authUserHeaderFilter)
+                                        .modifyResponseBody(String.class, Api.class, MediaType.APPLICATION_JSON_VALUE,
+                                                (exchange, string) -> {
+                                                    try {
+                                                        var response = objectMapper.readValue(string, Api.class);
+                                                        return Mono.just(response);
+                                                    } catch (JsonProcessingException e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                })
                                 )
                                 .uri("lb://review-service")
                 )
@@ -176,6 +236,15 @@ public class GatewayRouterConfig {
                                         //.removeRequestHeader("Cookie")
                                         .rewritePath("/review-service/(?<segment>.*)","/${segment}")
                                         .filter(authSuperHeaderFilter) // 관리자용 검증으로 변경
+                                        .modifyResponseBody(String.class, Api.class, MediaType.APPLICATION_JSON_VALUE,
+                                                (exchange, string) -> {
+                                                    try {
+                                                        var response = objectMapper.readValue(string, Api.class);
+                                                        return Mono.just(response);
+                                                    } catch (JsonProcessingException e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                })
                                 ).
                                 uri("lb://review-service")
                 )
@@ -205,6 +274,15 @@ public class GatewayRouterConfig {
                                 filters( f -> f
                                         .rewritePath("/seller-service/(?<segment>.*)","/${segment}")
                                          .filter(authSuperHeaderFilter) // seller 등록, 수정은 오직 관리자만
+                                        .modifyResponseBody(String.class, Api.class, MediaType.APPLICATION_JSON_VALUE,
+                                                (exchange, string) -> {
+                                                    try {
+                                                        var response = objectMapper.readValue(string, Api.class);
+                                                        return Mono.just(response);
+                                                    } catch (JsonProcessingException e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                })
                                 ).
                                 uri("lb://seller-service")
                 )
@@ -239,6 +317,4 @@ public class GatewayRouterConfig {
                 )
                 .build();
     }
-
-
 }
