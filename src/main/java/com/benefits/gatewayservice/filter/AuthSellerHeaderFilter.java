@@ -1,7 +1,12 @@
 package com.benefits.gatewayservice.filter;
 
+import com.benefits.gatewayservice.common.spec.Api;
+import com.benefits.gatewayservice.common.spec.Result;
 import com.benefits.gatewayservice.token.ifs.TokenHelperIfs;
+import com.benefits.gatewayservice.token.resultcode.ResultCodeIfs;
 import com.benefits.gatewayservice.token.resultcode.TokenResultCode;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
@@ -25,8 +30,8 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class AuthSellerHeaderFilter implements GatewayFilter {
 
+    private final ObjectMapper objectMapper;
     private final TokenHelperIfs tokenHelperIfs;
-
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -35,8 +40,7 @@ public class AuthSellerHeaderFilter implements GatewayFilter {
 
         if(!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)){
             return onError(exchange,
-                    TokenResultCode.AUTHORIZATION_TOKEN_NOT_FOUND.getResultCode()
-                            + " - " + TokenResultCode.AUTHORIZATION_TOKEN_NOT_FOUND.getMessage(), HttpStatus.UNAUTHORIZED);
+                    TokenResultCode.AUTHORIZATION_TOKEN_NOT_FOUND, HttpStatus.UNAUTHORIZED);
 //            throw new ApiException(TokenResultCode.AUTHORIZATION_TOKEN_NOT_FOUND);
         }
 
@@ -54,7 +58,7 @@ public class AuthSellerHeaderFilter implements GatewayFilter {
         var jwtValid = tokenHelperIfs.validationToken(jwt, List.of("SELLER", "SUPERVISOR"));
 
         if(!jwtValid.equals(TokenResultCode.OK)){
-            return onError(exchange, jwtValid.getResultCode() + " - " + jwtValid.getMessage(), HttpStatus.UNAUTHORIZED);
+            return onError(exchange, jwtValid, HttpStatus.UNAUTHORIZED);
         }
 
         return chain.filter(exchange);
@@ -62,13 +66,28 @@ public class AuthSellerHeaderFilter implements GatewayFilter {
 
 
     // WebFlux 방식 비동기 처리 반환 단위 단일 값 Mono, 단일 값 아닌 것 Flux
-    private Mono<Void> onError(ServerWebExchange exchange, String message, HttpStatus httpStatus) {
+    private Mono<Void> onError(ServerWebExchange exchange, ResultCodeIfs jwtValid, HttpStatus httpStatus) {
         ServerHttpResponse response = exchange.getResponse(); // 비동기 방식 이고 response에서 servlet 방식 사용 하지 않음
 
         response.setStatusCode(httpStatus);
-        log.error(message);
 
-        byte[] bytes = message.getBytes(StandardCharsets.UTF_8);
+        var spec = Api.builder()
+                .result(Result.builder()
+                        .resultCode(jwtValid.getHttpStatusCode())
+                        .resultMessage(httpStatus.getReasonPhrase())
+                        .resultDescription("코드(" + jwtValid.getResultCode() + ") - " + jwtValid.getMessage())
+                        .build())
+                .build();
+
+        var resultApiSpec = "";
+        try {
+            resultApiSpec = objectMapper.writeValueAsString(spec);
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        byte[] bytes = resultApiSpec.getBytes(StandardCharsets.UTF_8);
 
         DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
 
