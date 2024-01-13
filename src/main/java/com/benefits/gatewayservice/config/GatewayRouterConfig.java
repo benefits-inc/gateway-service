@@ -23,7 +23,17 @@ public class GatewayRouterConfig {
     @Bean
     public RouteLocator benefitsRouteLocator(RouteLocatorBuilder builder){
         return builder.routes()
-                // user-service
+                // user-service SWAGGER
+                .route(
+                        it -> it
+                                .path("/user-service/swagger-ui.html", "/user-service/swagger-ui/**", "/v3/api-docs/**")
+                                .filters( f -> f
+                                        //.removeRequestHeader("Cookie")
+                                        .rewritePath("/user-service/(?<segment>.*)","/${segment}")
+                                )
+                                .uri("lb://user-service")
+                )
+                // user-service API
                 .route(
                         it -> it
                                 .path("/user-service/open-api/**")
@@ -42,6 +52,7 @@ public class GatewayRouterConfig {
                                         //.removeRequestHeader("Cookie")
                                         .rewritePath("/user-service/(?<segment>.*)","/${segment}")
                                 )
+
                                 .uri("lb://user-service")
                 )
                 .route(
