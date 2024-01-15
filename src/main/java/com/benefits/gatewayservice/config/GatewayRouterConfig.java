@@ -32,11 +32,16 @@ public class GatewayRouterConfig {
                 // user-service SWAGGER
                 .route(
                         it -> it
-                                .path("/user-service/swagger-ui.html", "/user-service/swagger-ui/**", "/v3/api-docs/**")
+                                .path("/user-service/swagger-ui.html", "/user-service/swagger-ui/**")
                                 .filters( f -> f
-                                        //.removeRequestHeader("Cookie")
                                         .rewritePath("/user-service/(?<segment>.*)","/${segment}")
                                 )
+                                .uri("lb://user-service")
+                )
+                // /v3/api-docs/** 앞에 prefix 유지
+                .route(
+                        it -> it
+                                .path( "/user-service/v3/api-docs/**")
                                 .uri("lb://user-service")
                 )
                 // user-service API
@@ -73,7 +78,7 @@ public class GatewayRouterConfig {
                                 .uri("lb://user-service")
                 )
                 .route(
-                        it -> it.path("/user-service/auth-api/**").
+                        it -> it.path("/user-service/auth-user/**").
                                 filters( f -> f
                                         //.removeRequestHeader("Cookie")
                                         .rewritePath("/user-service/(?<segment>.*)","/${segment}")
@@ -91,7 +96,7 @@ public class GatewayRouterConfig {
                                 uri("lb://user-service")
                 )
                 .route(
-                        it -> it.path("/user-service/**").
+                        it -> it.path("/user-service/auth-super/**").
                                 filters( f -> f
                                         //.removeRequestHeader("Cookie")
                                         .rewritePath("/user-service/(?<segment>.*)","/${segment}")
@@ -108,6 +113,20 @@ public class GatewayRouterConfig {
                                 ).
                                 uri("lb://user-service")
                 )
+                // order-service SWAGGER
+                .route(
+                        it -> it
+                                .path("/order-service/swagger-ui.html", "/order-service/swagger-ui/**")
+                                .filters( f -> f
+                                        .rewritePath("/order-service/(?<segment>.*)","/${segment}")
+                                )
+                                .uri("lb://order-service")
+                )
+                .route(
+                        it -> it
+                                .path( "/order-service/v3/api-docs/**")
+                                .uri("lb://order-service")
+                )
                 // order-service
                 .route(
                         it -> it
@@ -121,7 +140,7 @@ public class GatewayRouterConfig {
                                 .uri("lb://order-service")
                 )
                 .route(
-                        it -> it.path("/order-service/auth-api/**").
+                        it -> it.path("/order-service/auth-user/**").
                                 filters( f -> f
                                         //.removeRequestHeader("Cookie")
                                         .rewritePath("/order-service/(?<segment>.*)","/${segment}")
@@ -139,7 +158,24 @@ public class GatewayRouterConfig {
                                 uri("lb://order-service")
                 )
                 .route(
-                        it -> it.path("/order-service/**").
+                        it -> it.path("/order-service/auth-seller/**").
+                                filters( f -> f
+                                        .rewritePath("/order-service/(?<segment>.*)","/${segment}")
+                                        .filter(authSellerHeaderFilter)
+                                        .modifyResponseBody(String.class, Api.class, MediaType.APPLICATION_JSON_VALUE,
+                                                (exchange, string) -> {
+                                                    try {
+                                                        var response = objectMapper.readValue(string, Api.class);
+                                                        return Mono.just(response);
+                                                    } catch (JsonProcessingException e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                })
+                                ).
+                                uri("lb://order-service")
+                )
+                .route(
+                        it -> it.path("/order-service/auth-super/**").
                                 filters( f -> f
                                         .rewritePath("/order-service/(?<segment>.*)","/${segment}")
                                         .filter(authSuperHeaderFilter)
@@ -154,6 +190,20 @@ public class GatewayRouterConfig {
                                                 })
                                 ).
                                 uri("lb://order-service")
+                )
+                // product-service SWAGGER
+                .route(
+                        it -> it
+                                .path("/product-service/swagger-ui.html", "/product-service/swagger-ui/**")
+                                .filters( f -> f
+                                        .rewritePath("/product-service/(?<segment>.*)","/${segment}")
+                                )
+                                .uri("lb://product-service")
+                )
+                .route(
+                        it -> it
+                                .path( "/product-service/v3/api-docs/**")
+                                .uri("lb://product-service")
                 )
                 // product-service
                 .route(
@@ -177,7 +227,7 @@ public class GatewayRouterConfig {
                                 .uri("lb://product-service")
                 )
                 .route(
-                        it -> it.path("/product-service/**").
+                        it -> it.path("/product-service/auth-seller/**").
                                 filters( f -> f
                                         .rewritePath("/product-service/(?<segment>.*)","/${segment}")
                                         .filter(authSellerHeaderFilter) // seller, supervisor
@@ -192,6 +242,37 @@ public class GatewayRouterConfig {
                                                 })
                                 ).
                                 uri("lb://product-service")
+                )
+                .route(
+                        it -> it.path("/product-service/auth-super/**").
+                                filters( f -> f
+                                        .rewritePath("/product-service/(?<segment>.*)","/${segment}")
+                                        .filter(authSuperHeaderFilter) // supervisor
+                                        .modifyResponseBody(String.class, Api.class, MediaType.APPLICATION_JSON_VALUE,
+                                                (exchange, string) -> {
+                                                    try {
+                                                        var response = objectMapper.readValue(string, Api.class);
+                                                        return Mono.just(response);
+                                                    } catch (JsonProcessingException e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                })
+                                ).
+                                uri("lb://product-service")
+                )
+                // review-service SWAGGER
+                .route(
+                        it -> it
+                                .path("/review-service/swagger-ui.html", "/review-service/swagger-ui/**")
+                                .filters( f -> f
+                                        .rewritePath("/review-service/(?<segment>.*)","/${segment}")
+                                )
+                                .uri("lb://review-service")
+                )
+                .route(
+                        it -> it
+                                .path( "/review-service/v3/api-docs/**")
+                                .uri("lb://review-service")
                 )
                 // review-service
                 .route(
@@ -214,7 +295,7 @@ public class GatewayRouterConfig {
                 )
                 .route(
                         it -> it
-                                .path("/review-service/auth-api/**")
+                                .path("/review-service/auth-user/**")
                                 .filters( f -> f
                                         .rewritePath("/review-service/(?<segment>.*)","/${segment}")
                                         .filter(authUserHeaderFilter)
@@ -231,7 +312,7 @@ public class GatewayRouterConfig {
                                 .uri("lb://review-service")
                 )
                 .route(
-                        it -> it.path("/review-service/**").
+                        it -> it.path("/review-service/auth-super/**").
                                 filters( f -> f
                                         //.removeRequestHeader("Cookie")
                                         .rewritePath("/review-service/(?<segment>.*)","/${segment}")
@@ -247,6 +328,20 @@ public class GatewayRouterConfig {
                                                 })
                                 ).
                                 uri("lb://review-service")
+                )
+                // seller-service SWAGGER
+                .route(
+                        it -> it
+                                .path("/seller-service/swagger-ui.html", "/seller-service/swagger-ui/**")
+                                .filters( f -> f
+                                        .rewritePath("/seller-service/(?<segment>.*)","/${segment}")
+                                )
+                                .uri("lb://seller-service")
+                )
+                .route(
+                        it -> it
+                                .path( "/seller-service/v3/api-docs/**")
+                                .uri("lb://seller-service")
                 )
                 // seller-service
                 .route(
@@ -270,10 +365,10 @@ public class GatewayRouterConfig {
                                 .uri("lb://seller-service")
                 )
                 .route(
-                        it -> it.path("/seller-service/**").
+                        it -> it.path("/seller-service/auth-super/**").
                                 filters( f -> f
                                         .rewritePath("/seller-service/(?<segment>.*)","/${segment}")
-                                         .filter(authSuperHeaderFilter) // seller 등록, 수정은 오직 관리자만
+                                        .filter(authSuperHeaderFilter) // seller 등록, 수정은 오직 관리자만
                                         .modifyResponseBody(String.class, Api.class, MediaType.APPLICATION_JSON_VALUE,
                                                 (exchange, string) -> {
                                                     try {
@@ -285,6 +380,20 @@ public class GatewayRouterConfig {
                                                 })
                                 ).
                                 uri("lb://seller-service")
+                )
+                // supervisor-service SWAGGER
+                .route(
+                        it -> it
+                                .path("/supervisor-service/swagger-ui.html", "/supervisor-service/swagger-ui/**")
+                                .filters( f -> f
+                                        .rewritePath("/supervisor-service/(?<segment>.*)","/${segment}")
+                                )
+                                .uri("lb://supervisor-service")
+                )
+                .route(
+                        it -> it
+                                .path( "/supervisor-service/v3/api-docs/**")
+                                .uri("lb://supervisor-service")
                 )
                 // supervisor-service
                 .route(
@@ -308,10 +417,19 @@ public class GatewayRouterConfig {
                                 .uri("lb://supervisor-service")
                 )
                 .route(
-                        it -> it.path("/supervisor-service/**").
+                        it -> it.path("/supervisor-service/auth-super/**").
                                 filters( f -> f
                                         .rewritePath("/supervisor-service/(?<segment>.*)","/${segment}")
-                                        //.filter(authSuperHeaderFilter)
+                                        .filter(authSuperHeaderFilter) // test@gmail.com 테스트 수퍼바이저 계정 제공
+                                        .modifyResponseBody(String.class, Api.class, MediaType.APPLICATION_JSON_VALUE,
+                                                (exchange, string) -> {
+                                                    try {
+                                                        var response = objectMapper.readValue(string, Api.class);
+                                                        return Mono.just(response);
+                                                    } catch (JsonProcessingException e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                })
                                 ).
                                 uri("lb://supervisor-service")
                 )
