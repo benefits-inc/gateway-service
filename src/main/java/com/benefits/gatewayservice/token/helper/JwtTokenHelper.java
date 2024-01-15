@@ -13,10 +13,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Component
 @Primary
@@ -37,6 +34,10 @@ public class JwtTokenHelper implements TokenHelperIfs {
             ObjectMapper objectMapper = new ObjectMapper();
             payload = objectMapper.readValue(decodedPayloadByte, Payload.class);
         } catch (IOException e) {
+            return TokenResultCode.INVALID_PAYLOAD;
+        }
+
+        if(payload.getRole() == null){
             return TokenResultCode.INVALID_PAYLOAD;
         }
 
