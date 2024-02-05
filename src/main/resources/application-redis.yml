@@ -1,0 +1,14 @@
+spring:
+  redis:
+    master:
+      name: mymaster
+      ip: localhost
+      sentinel-port: 26379
+    slave:
+      ip: localhost
+      sentinel-port: 26380
+    sentinel:
+      ip: localhost
+      sentinel-port: 26381
+#    cluster:
+#      nodes: localhost:6379,localhost:6380

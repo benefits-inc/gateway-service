@@ -22,6 +22,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -39,27 +40,42 @@ public class AuthUserHeaderFilter implements GatewayFilter {
         ServerHttpRequest request = exchange.getRequest();
         ServerHttpResponse response = exchange.getResponse();
 
+        // restore 시에 cookie refreshToken 만 검증 ( accessToken이 만료 된 시점에서 호출이라..)
+        var refreshToken = "";
+        if (request.getPath().toString().equals("/auth-user/restore")){
+            if(!request.getCookies().containsKey("refreshToken")){
+                return onError(exchange,
+                        TokenResultCode.AUTHORIZATION_TOKEN_NOT_FOUND, HttpStatus.UNAUTHORIZED);
+            }
+
+            refreshToken = request.getCookies().get("refreshToken").get(0).getValue();
+            var refreshTokenValid = tokenHelperIfs.validationToken(refreshToken, List.of("USER", "SUPERVISOR"));
+
+            if(!refreshTokenValid.equals(TokenResultCode.OK)){
+                return onError(exchange, refreshTokenValid, HttpStatus.UNAUTHORIZED);
+            }
+            return chain.filter(exchange);
+        }
+
         if(!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)){
             return onError(exchange,
                     TokenResultCode.AUTHORIZATION_TOKEN_NOT_FOUND, HttpStatus.UNAUTHORIZED);
 //            throw new ApiException(TokenResultCode.AUTHORIZATION_TOKEN_NOT_FOUND);
         }
 
-
-
         var authorizationHeader =
                 Objects.requireNonNull(request.getHeaders().get(HttpHeaders.AUTHORIZATION)).get(0);
 
-        var jwt = authorizationHeader.replace("Bearer", "");
+        var accessToken = authorizationHeader.replace("Bearer ", "");//.strip();
 
         //request.getMethod()
         //request.getURI()
 
         // token validation return
-        var jwtValid = tokenHelperIfs.validationToken(jwt, List.of("USER", "SUPERVISOR"));
+        var accessTokenValid = tokenHelperIfs.validationToken(accessToken, List.of("USER", "SUPERVISOR"));
 
-        if(!jwtValid.equals(TokenResultCode.OK)){
-            return onError(exchange, jwtValid, HttpStatus.UNAUTHORIZED);
+        if(!accessTokenValid.equals(TokenResultCode.OK)){
+            return onError(exchange, accessTokenValid, HttpStatus.UNAUTHORIZED);
         }
 
         return chain.filter(exchange);
