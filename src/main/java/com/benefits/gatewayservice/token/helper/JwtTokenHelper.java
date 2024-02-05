@@ -10,6 +10,7 @@ import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -22,10 +23,17 @@ public class JwtTokenHelper implements TokenHelperIfs {
 
     // @Value("${token.secret.key}")
     private final Environment env;
+    private final RedisTemplate<String, String> redisTemplate;
 
 
     @Override
     public ResultCodeIfs validationToken(String token, List<String> roles) {
+
+        var redisToken = Optional.ofNullable(redisTemplate.opsForValue().get(token));
+        if(redisToken.isPresent()){
+            return TokenResultCode.EXPIRED_TOKEN;
+        }
+
         var token_payload = token.split("\\.")[1];
         byte[] decodedPayloadByte = Base64.getDecoder().decode(token_payload);
 
