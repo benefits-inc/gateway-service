@@ -6,4 +6,4 @@ spring:
     name: gateway-service
 
   profiles:
-    include: eureka, config, actuator, rabbitmq #, route
+    include: eureka, config, actuator, rabbitmq, redis #, route
