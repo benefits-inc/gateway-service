@@ -5,13 +5,16 @@ import com.benefits.gatewayservice.filter.AuthSellerHeaderFilter;
 import com.benefits.gatewayservice.filter.AuthSuperHeaderFilter;
 import com.benefits.gatewayservice.filter.AuthUserHeaderFilter;
 //import com.benefits.gatewayservice.filter.AuthorizationHeaderFilter;
+import com.benefits.gatewayservice.token.model.TokenResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import reactor.core.publisher.Mono;
 
@@ -56,19 +59,29 @@ public class GatewayRouterConfig {
                 )
                 .route(
                         it -> it
-                                .path("/user-service/login")
-                                .and()
-                                .method("POST")
+                                .path("/user-service/open-api/logout")
                                 .filters( f -> f
-                                        //.removeRequestHeader("Cookie")
+                                        // .removeRequestHeader("Cookie")
                                         .rewritePath("/user-service/(?<segment>.*)","/${segment}")
                                 )
-
                                 .uri("lb://user-service")
                 )
+//                .route(
+//                        it -> it
+//                                .path("/user-service/login")
+//                                .and()
+//                                .method("POST")
+//                                .filters( f -> f
+//                                        //.removeRequestHeader("Cookie")
+//                                        .rewritePath("/user-service/(?<segment>.*)","/${segment}")
+//                                )
+//
+//                                .uri("lb://user-service")
+//                )
                 .route(
                         it -> it
-                                .path("/user-service/restore","/user-service/actuator/**")
+                                //.path("/user-service/restore","/user-service/actuator/**")
+                                .path("/user-service/actuator/**")
                                 .and()
                                 .method("GET", "POST")
                                 .filters( f -> f
@@ -76,6 +89,28 @@ public class GatewayRouterConfig {
                                         .rewritePath("/user-service/(?<segment>.*)","/${segment}")
                                 )
                                 .uri("lb://user-service")
+                )
+                .route(
+                        it -> it.path("/user-service/auth-user/restore").
+                                filters( f -> f
+                                        //.removeRequestHeader("Cookie")
+                                        .rewritePath("/user-service/(?<segment>.*)","/${segment}")
+                                        .filter(authUserHeaderFilter)
+                                        .modifyResponseBody(String.class, Object.class, MediaType.APPLICATION_JSON_VALUE,
+                                                (exchange, string) -> {
+                                                    try {
+                                                        if(exchange.getResponse().getStatusCode().equals(HttpStatus.CREATED)){
+                                                            var response = objectMapper.readValue(string, TokenResponse.class);
+                                                            return Mono.just(response);
+                                                        }
+                                                        var response = objectMapper.readValue(string, Api.class);
+                                                        return Mono.just(response);
+                                                    } catch (JsonProcessingException e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                })
+                                ).
+                                uri("lb://user-service")
                 )
                 .route(
                         it -> it.path("/user-service/auth-user/**").
