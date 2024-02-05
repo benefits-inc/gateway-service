@@ -66,18 +66,6 @@ public class GatewayRouterConfig {
                                 )
                                 .uri("lb://user-service")
                 )
-//                .route(
-//                        it -> it
-//                                .path("/user-service/login")
-//                                .and()
-//                                .method("POST")
-//                                .filters( f -> f
-//                                        //.removeRequestHeader("Cookie")
-//                                        .rewritePath("/user-service/(?<segment>.*)","/${segment}")
-//                                )
-//
-//                                .uri("lb://user-service")
-//                )
                 .route(
                         it -> it
                                 //.path("/user-service/restore","/user-service/actuator/**")
