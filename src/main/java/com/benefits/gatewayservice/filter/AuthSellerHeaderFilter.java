@@ -49,7 +49,7 @@ public class AuthSellerHeaderFilter implements GatewayFilter {
         var authorizationHeader =
                 Objects.requireNonNull(request.getHeaders().get(HttpHeaders.AUTHORIZATION)).get(0);
 
-        var jwt = authorizationHeader.replace("Bearer", "");
+        var jwt = authorizationHeader.replace("Bearer ", "");
 
         //request.getMethod()
         //request.getURI()

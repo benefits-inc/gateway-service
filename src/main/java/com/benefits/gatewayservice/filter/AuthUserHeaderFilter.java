@@ -50,7 +50,7 @@ public class AuthUserHeaderFilter implements GatewayFilter {
         var authorizationHeader =
                 Objects.requireNonNull(request.getHeaders().get(HttpHeaders.AUTHORIZATION)).get(0);
 
-        var jwt = authorizationHeader.replace("Bearer", "");
+        var jwt = authorizationHeader.replace("Bearer ", "");//.strip();
 
         //request.getMethod()
         //request.getURI()
