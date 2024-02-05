@@ -47,6 +47,9 @@ dependencies {
 
 	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
+	// redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+
 	implementation 'io.netty:netty-resolver-dns-native-macos'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
